@@ -1,1 +1,3 @@
-A repo for my Bash scripts. 
+# Bash
+
+A repo for my Bash scripts.
