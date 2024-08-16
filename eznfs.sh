@@ -17,8 +17,10 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+SERVER_IP=$(ip addr show dev eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
+
 LOC=$(cat /etc/exports | grep 192.168 && grep 10.0)
-printf "\nPlease enter the IP address that you'd like to add today:\n"
+echo -e "\nPlease enter the IP address that you'd like to add today:\n"
 read -r IP
 
 case ${IP} in 
@@ -35,5 +37,27 @@ case ${IP} in
 
     echo "${IP} can now mount to the NFS server, creating client-side script to connect..."
 
+    echo "sudo mount -t nfs ${SERVER_IP}:/mnt/share /mnt/nfs" >> nfsmnt.sh
+    chmod +x nfsmnt.sh 
   ;;
 esac
+
+# I planning on replacing the sshpass stuff with ssh keys # in the near future, this is just helping me finish out  # the logic of what the program is supposed to be doing
+
+echo "Enter the username for ${IP}"
+read username
+
+echo "Enter the password for ${username}"
+read password
+
+sshpass -p ${password} scp nfsmnt.sh ${username}@${IP}:/home/${username}
+status=$?
+
+if [ $status -eq 0 ]; then
+    echo "Mount file sent successfully to ${username}@${IP}"
+else 
+    echo "Error: Failed to send the File"
+    exit $status
+fi
+
+exit 0
